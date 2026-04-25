@@ -1,18 +1,7 @@
 aiofiles==24.1.0
 aiogram==3.22.0
 aiohttp==3.12.15
-aiosignal==1.4.0
 
-annotated-types==0.7.0
-anyio==4.11.0
-asgiref==3.10.0
-attrs==25.3.0
-
-certifi==2025.8.3
-charset-normalizer==3.4.3
-click==8.3.1
-
-dj-database-url==3.1.2
 Django==5.2.8
 django-cors-headers==4.9.0
 djangorestframework==3.17.1
@@ -20,28 +9,12 @@ djangorestframework_simplejwt==5.5.1
 
 gunicorn==25.3.0
 
-httpx==0.28.1
-idna==3.10
-
-pillow==12.2.0
-
 psycopg2-binary==2.9.12
 
 pydantic==2.11.9
 
-PyJWT==2.12.1
 python-dotenv==1.2.2
-
 requests==2.32.5
 
-SQLAlchemy==2.0.48
-sqlparse==0.5.3
-
-starlette==0.52.1
 typing-extensions==4.15.0
-
 tzdata==2025.2
-
-urllib3==2.5.0
-
-uvicorn==0.41.0
