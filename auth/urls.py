@@ -5,8 +5,13 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from my_app.views import *
 from django.conf import settings
 from django.conf.urls.static import static
+from django.conf import settings
+from django.conf.urls.static import static
+
+
 
 urlpatterns = [
+    *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),
     path('admin/', admin.site.urls),
     path('api/register/', RegistrationAPIView.as_view(), name='registration'),
     path('api/login/', LoginAPIView.as_view(), name='login'),

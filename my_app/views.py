@@ -9,19 +9,24 @@ from .serializers import *
 
 class UpdateProfileAPIView(APIView):
     permission_classes = [IsAuthenticated]
+
     def patch(self, request):
         user = request.user
-        
-        serializers = UserUpdateSerializer(
-           user,
-           data=request.data,
-           partial=True
+
+        serializer = UserUpdateSerializer(
+            user,
+            data=request.data,
+            partial=True
         )
 
-        if serializers.is_valid():
-            serializers.save()
-            return Response(serializers.data)
-        return Response(serializers.errors, status=400) 
+        if serializer.is_valid():
+            serializer.save()
+
+            return Response({
+                "user": serializer.data   # 🔥 ОБЯЗАТЕЛЬНО
+            }, status=200)
+
+        return Response(serializer.errors, status=400)
 
 class RegistrationAPIView(APIView):
     permission_classes = [AllowAny]
