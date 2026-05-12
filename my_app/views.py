@@ -107,13 +107,13 @@ class LoginAPIView(APIView):
         })
 
 class GetInfoUser(APIView):
-
     permission_classes = [IsAuthenticated]
+
     def get(self, request):
         user = request.user
-        print(f"Информация о пользователе: {request.user}")
-        
-        return Response(UserSerializer(user).data, status=status.HTTP_200_OK)
+        # ОБЯЗАТЕЛЬНО добавляем context
+        serializer = UserSerializer(user, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class GetSchedule(APIView):
