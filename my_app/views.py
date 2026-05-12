@@ -134,17 +134,11 @@ class GetSchedule(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class GetGrades(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
-        username = request.query_params.get('username')
-
-        if not username:
-            return Response(
-                {"error": "Не передан параметр username"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        grades_student = Grades.objects.all()
-
+        # Берем только оценки того, кто делает запрос
+        grades_student = Grades.objects.filter(student=request.user)
         serializer = GradesSerializer(grades_student, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
     

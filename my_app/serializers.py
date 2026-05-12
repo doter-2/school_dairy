@@ -7,10 +7,19 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         fields = ['id', 'username', 'email', 'student_class', 'is_active', 'is_staff', 'avatar']
 
 class UserSerializer(serializers.ModelSerializer):
+    avatar = serializers.SerializerMethodField()
+
     class Meta:
         model = Users
         fields = ['id', 'username', 'email', 'student_class', 'is_active', 'is_staff', 'avatar']
-        read_only_friends = ['id']
+
+    def get_avatar(self, obj):
+        if not obj.avatar:
+            return None
+        request = self.context.get('request')
+        if request is not None:
+            return request.build_absolute_uri(obj.avatar.url)
+        return obj.avatar.url
 class ScheduleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Schedule
