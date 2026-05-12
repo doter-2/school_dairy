@@ -23,7 +23,7 @@ class Users(AbstractBaseUser, PermissionsMixin):
     student_class = models.CharField(max_length=3)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
-    teacher = models.CharField(max_length=100)
+    teacher = models.CharField(max_length=100,blank=True,null=True)
     avatar = models.ImageField(upload_to='avatars/',default="default.png")
 
     objects = UserManager()
@@ -40,7 +40,7 @@ class Schedule(models.Model):
     start_time = models.TimeField()
     end_time = models.TimeField()
     classroom = models.IntegerField()
-    teacher = models.CharField(max_length=100)
+    teacher = models.CharField(max_length=100,blank=True,null=True)
     class_name = models.CharField(max_length=100)
     
     class Meta:

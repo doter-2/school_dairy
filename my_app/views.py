@@ -1,11 +1,14 @@
+# views.py
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from django.contrib.auth.hashers import make_password, check_password
 from rest_framework_simplejwt.tokens import RefreshToken
+
 from .models import *
 from .serializers import *
+
 
 class UpdateProfileAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -23,106 +26,146 @@ class UpdateProfileAPIView(APIView):
             serializer.save()
 
             return Response({
-                "user": serializer.data   # 🔥 ОБЯЗАТЕЛЬНО
+                "user": serializer.data
             }, status=200)
 
         return Response(serializer.errors, status=400)
 
+
 class RegistrationAPIView(APIView):
     permission_classes = [AllowAny]
+
     def post(self, request):
-        data = request.data
-        username = data.get('username', None)
-        email = data.get('email', None)
-        password = data.get('password', None)
-        student_class = data.get('student_class')
-        
-        print(data)
-        if username is None or password is None or email is None:
-            return Response({'message': 'Нужен и логин, и пароль'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        user_exist = Users.objects.filter(username=username).exists()
-        email_exist = Users.objects.filter(email=email).exists()
-        
-        if user_exist:
-            return Response({'message': "Пользователь уже существует"}, status=status.HTTP_400_BAD_REQUEST)
-        if email_exist:
-            return Response({'message': "E-mail уже существует"}, status=status.HTTP_400_BAD_REQUEST)
-        
-        hashed_password= make_password(password)
-        
-        user = Users.objects.create(
-            username= username, 
-            email = email,
-            password = hashed_password,
-            student_class = student_class 
+        try:
+            data = request.data
+
+            username = data.get('username')
+            email = data.get('email')
+            password = data.get('password')
+            student_class = data.get('student_class')
+
+            if not username or not email or not password:
+                return Response(
+                    {'message': 'Нужен username, email и пароль'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            user_exist = Users.objects.filter(username=username).exists()
+            email_exist = Users.objects.filter(email=email).exists()
+
+            if user_exist:
+                return Response(
+                    {'message': 'Пользователь уже существует'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            if email_exist:
+                return Response(
+                    {'message': 'E-mail уже существует'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # 🔥 ВАЖНО: create_user вместо create
+            user = Users.objects.create_user(
+                username=username,
+                email=email,
+                password=password,
+                student_class=student_class
             )
-        user.save()
-        refresh_token = RefreshToken.for_user(user)
-        access_token = refresh_token.access_token
-        
-        print(access_token)
-        print(refresh_token)
-        return Response(
-            {
-            "message": "Регистрация прошла успешна",
-            "access_token": str(access_token), 
-            "refresh_token": str(refresh_token)
-            }, 
-            status=status.HTTP_201_CREATED
-            )
+
+            refresh = RefreshToken.for_user(user)
+
+            return Response({
+                "message": "Регистрация прошла успешно",
+                "access_token": str(refresh.access_token),
+                "refresh_token": str(refresh)
+            }, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            print("REGISTER ERROR:", str(e))
+
+            return Response({
+                "error": str(e)
+            }, status=500)
+
 
 class LoginAPIView(APIView):
+    permission_classes = [AllowAny]
+
     def post(self, request):
-        email = request.data.get('email')
-        password = request.data.get('password')
-        
-        if not email or not password:
-            return Response(
-                {'message': 'Нужен и email, и пароль'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        user = Users.objects.filter(email=email).first()
-        if not user:
-            return Response(
-                {'message': 'Пользователь не найден'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-      
-        print(f"Попытка логина: {request.data}")
-        if not check_password(password, user.password):
-            return Response(
-                {'message': 'Неверный email или пароль'},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
-        
+        try:
+            email = request.data.get('email')
+            password = request.data.get('password')
 
-        refresh = RefreshToken.for_user(user)
+            if not email or not password:
+                return Response(
+                    {'message': 'Нужен email и пароль'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
-        return Response({
-            "message": "Успешный вход",
-            "access_token": str(refresh.access_token),
-            "refresh_token": str(refresh)
-        })
+            user = Users.objects.filter(email=email).first()
+
+            if not user:
+                return Response(
+                    {'message': 'Пользователь не найден'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            # 🔥 ПРАВИЛЬНО для AbstractBaseUser
+            if not user.check_password(password):
+                return Response(
+                    {'message': 'Неверный пароль'},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+
+            refresh = RefreshToken.for_user(user)
+
+            return Response({
+                "message": "Успешный вход",
+                "access_token": str(refresh.access_token),
+                "refresh_token": str(refresh)
+            })
+
+        except Exception as e:
+            print("LOGIN ERROR:", str(e))
+
+            return Response({
+                "error": str(e)
+            }, status=500)
+
 
 class GetInfoUser(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        user = request.user
-        # ОБЯЗАТЕЛЬНО добавляем context
-        serializer = UserSerializer(user, context={'request': request})
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        try:
+            user = request.user
+
+            serializer = UserSerializer(
+                user,
+                context={'request': request}
+            )
+
+            return Response(
+                serializer.data,
+                status=status.HTTP_200_OK
+            )
+
+        except Exception as e:
+            print("USER INFO ERROR:", str(e))
+
+            return Response({
+                "error": str(e)
+            }, status=500)
 
 
 class GetSchedule(APIView):
     def get(self, request):
-        student_class = request.query_params.get('student_class', None)
+        student_class = request.query_params.get('student_class')
 
         if not student_class:
             return Response(
-                {"error": "Не передан параметр student_class"},
+                {"error": "Не передан student_class"},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -131,24 +174,39 @@ class GetSchedule(APIView):
         ).order_by('start_time')
 
         serializer = ScheduleSerializer(schedule_student, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK
+        )
+
 
 class GetGrades(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        # Берем только оценки того, кто делает запрос
-        grades_student = Grades.objects.filter(student=request.user)
-        serializer = GradesSerializer(grades_student, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    
+        grades_student = Grades.objects.filter(
+            student=request.user
+        )
+
+        serializer = GradesSerializer(
+            grades_student,
+            many=True
+        )
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK
+        )
+
+
 class GetAttendance(APIView):
     def get(self, request):
         username = request.query_params.get('username')
 
         if not username:
             return Response(
-                {"error": "Не передан параметр username"},
+                {"error": "Не передан username"},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -156,16 +214,24 @@ class GetAttendance(APIView):
             student__username=username
         ).order_by('date')
 
-        serializer = AttendanceSerializer(attendance_student, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    
+        serializer = AttendanceSerializer(
+            attendance_student,
+            many=True
+        )
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK
+        )
+
+
 class GetPayment(APIView):
     def get(self, request):
         username = request.query_params.get('username')
 
         if not username:
             return Response(
-                {"error": "Не передан параметр username"},
+                {"error": "Не передан username"},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -173,21 +239,42 @@ class GetPayment(APIView):
             student__username=username
         ).order_by('date_pay')
 
-        serializer = PaymentSerializer(payment_student, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        serializer = PaymentSerializer(
+            payment_student,
+            many=True
+        )
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK
+        )
+
 
 class LogoutAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        refresh_token = request.data.get('refresh_token')
-        if not refresh_token:
-            return Response({'error': 'Необходим refresh token'}, status=status.HTTP_400_BAD_REQUEST)
-
         try:
-            token = RefreshToken(refresh_token)
-            token.blacklist()  # Нужно подключить simplejwt.token_blacklist
-        except Exception:
-            return Response({'error': 'Неверный refresh token'}, status=status.HTTP_400_BAD_REQUEST)
+            refresh_token = request.data.get('refresh_token')
 
-        return Response({'success': 'Выход успешен'}, status=status.HTTP_200_OK)
+            if not refresh_token:
+                return Response(
+                    {'error': 'Нужен refresh token'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+
+            return Response(
+                {'success': 'Выход успешен'},
+                status=status.HTTP_200_OK
+            )
+
+        except Exception as e:
+            print("LOGOUT ERROR:", str(e))
+
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )

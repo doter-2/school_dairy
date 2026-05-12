@@ -1,80 +1,50 @@
-from .models import Users, Schedule, Grades, Subject, Attendance, Payment
+# serializers.py
+
+from .models import *
 from rest_framework import serializers
+
 
 class UserUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Users
-        fields = ['id', 'username', 'email', 'student_class', 'is_active', 'is_staff', 'avatar']
+        fields = [
+            'id',
+            'username',
+            'email',
+            'student_class',
+            'is_active',
+            'is_staff',
+            'avatar'
+        ]
+
 
 class UserSerializer(serializers.ModelSerializer):
     avatar = serializers.SerializerMethodField()
 
     class Meta:
         model = Users
-        fields = ['id', 'username', 'email', 'student_class', 'is_active', 'is_staff', 'avatar']
+        fields = [
+            'id',
+            'username',
+            'email',
+            'student_class',
+            'is_active',
+            'is_staff',
+            'avatar'
+        ]
 
     def get_avatar(self, obj):
-        if not obj.avatar:
-            return None
-        request = self.context.get('request')
-        if request is not None:
-            return request.build_absolute_uri(obj.avatar.url)
-        return obj.avatar.url
-class ScheduleSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Schedule
-        fields = [
-            'id',
-            'subject',
-            'date',
-            'start_time',
-            'end_time',
-            'classroom',
-            'teacher',
-            'class_name'
-        ]
-    
-class GradesSerializer(serializers.ModelSerializer):
-    student_name = serializers.CharField(source='student.username', read_only=True)
-    subject_name = serializers.CharField(source='subject.name', read_only=True)
+        try:
+            if not obj.avatar:
+                return None
 
-    class Meta:
-        model = Grades
-        fields = [
-            'id',
-            'student',
-            'student_name',
-            'subject',
-            'subject_name',
-            'grade',
-            'date',
-            'lesson_topic',
-        ]
-class AttendanceSerializer(serializers.ModelSerializer):
-    student_name = serializers.CharField(source='student.username', read_only=True)
-    subject_name = serializers.CharField(source='subject.name', read_only=True)
+            request = self.context.get('request')
 
-    class Meta:
-        model = Attendance
-        fields = [
-            'id',
-            'student',
-            'student_name',
-            'subject',
-            'subject_name',
-            'attendance',
-            'date',
-        ]
-class PaymentSerializer(serializers.ModelSerializer):
-    student_name = serializers.CharField(source='student.username', read_only=True)
+            if request:
+                return request.build_absolute_uri(obj.avatar.url)
 
-    class Meta:
-        model = Payment
-        fields = [
-            'id',
-            'student',
-            'student_name',
-            'date_pay',
-            'month',
-            'paid',
-        ]
+            return obj.avatar.url
+
+        except Exception as e:
+            print("AVATAR ERROR:", str(e))
+            return None 
