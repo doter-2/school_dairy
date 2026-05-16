@@ -1,11 +1,8 @@
-# views.py
-
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
-
 from .models import *
 from .serializers import *
 
@@ -135,7 +132,6 @@ class LoginAPIView(APIView):
 
 
 class GetInfoUser(APIView):
-    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         try:
@@ -200,31 +196,6 @@ class GetGrades(APIView):
         )
 
 
-class GetAttendance(APIView):
-    def get(self, request):
-        username = request.query_params.get('username')
-
-        if not username:
-            return Response(
-                {"error": "Не передан username"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        attendance_student = Attendance.objects.filter(
-            student__username=username
-        ).order_by('date')
-
-        serializer = AttendanceSerializer(
-            attendance_student,
-            many=True
-        )
-
-        return Response(
-            serializer.data,
-            status=status.HTTP_200_OK
-        )
-
-
 class GetPayment(APIView):
     def get(self, request):
         username = request.query_params.get('username')
@@ -235,20 +206,48 @@ class GetPayment(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        payment_student = Payment.objects.filter(
-            student__username=username
-        ).order_by('date_pay')
+        try:
+            payment_student = Payment.objects.filter(
+                student__username=username
+            ).order_by('date_pay')
 
-        serializer = PaymentSerializer(
-            payment_student,
-            many=True
-        )
+            serializer = PaymentSerializer(
+                payment_student,
+                many=True
+            )
 
-        return Response(
-            serializer.data,
-            status=status.HTTP_200_OK
-        )
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
+        except Exception as e:
+            print("PAYMENT ERROR:", str(e))
+            return Response({"error": str(e)}, status=500)
+
+
+class GetAttendance(APIView):
+    def get(self, request):
+        username = request.query_params.get('username')
+
+        if not username:
+            return Response(
+                {"error": "Не передан username"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            attendance_student = Attendance.objects.filter(
+                student__username=username
+            ).order_by('date')
+
+            serializer = AttendanceSerializer(
+                attendance_student,
+                many=True
+            )
+
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            print("ATTENDANCE ERROR:", str(e))
+            return Response({"error": str(e)}, status=500)
 
 class LogoutAPIView(APIView):
     permission_classes = [IsAuthenticated]
