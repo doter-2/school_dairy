@@ -132,6 +132,7 @@ class LoginAPIView(APIView):
 
 
 class GetInfoUser(APIView):
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         try:
