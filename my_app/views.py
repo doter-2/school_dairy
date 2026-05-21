@@ -177,13 +177,12 @@ class GetSchedule(APIView):
             status=status.HTTP_200_OK
         )
 
-
 class GetGrades(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         grades_student = Grades.objects.filter(
-            student=request.user
+            student=request.user  # уже правильно
         )
 
         serializer = GradesSerializer(
@@ -194,7 +193,7 @@ class GetGrades(APIView):
         return Response(
             serializer.data,
             status=status.HTTP_200_OK
-        )
+        )   
 
 
 class GetPayment(APIView):

@@ -20,6 +20,7 @@ class UserSerializer(serializers.ModelSerializer):
         if request is not None:
             return request.build_absolute_uri(obj.avatar.url)
         return obj.avatar.url
+
 class ScheduleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Schedule
@@ -33,12 +34,7 @@ class ScheduleSerializer(serializers.ModelSerializer):
             'teacher',
             'class_name'
         ]
-    
-def get_student_name(self, obj):
-    return getattr(obj.student, "username", None)
 
-def get_subject_name(self, obj):
-    return getattr(obj.subject, "name", None)
 class GradesSerializer(serializers.ModelSerializer):
     student_name = serializers.SerializerMethodField()
     subject_name = serializers.SerializerMethodField()
@@ -56,11 +52,12 @@ class GradesSerializer(serializers.ModelSerializer):
             'lesson_topic',
         ]
 
-def get_student_name(self, obj):
-    return getattr(obj.student, "username", None)
+    def get_student_name(self, obj):
+        return getattr(obj.student, "username", None)
 
-def get_subject_name(self, obj):
-    return getattr(obj.subject, "name", None)
+    def get_subject_name(self, obj):
+        return getattr(obj.subject, "name", None)
+
 class AttendanceSerializer(serializers.ModelSerializer):
     student_name = serializers.SerializerMethodField()
     subject_name = serializers.SerializerMethodField()
@@ -77,8 +74,12 @@ class AttendanceSerializer(serializers.ModelSerializer):
             'date',
         ]
 
-def get_student_name(self, obj):
-    return getattr(obj.student, "username", None)
+    def get_student_name(self, obj):
+        return getattr(obj.student, "username", None)
+
+    def get_subject_name(self, obj):
+        return getattr(obj.subject, "name", None)
+
 class PaymentSerializer(serializers.ModelSerializer):
     student_name = serializers.SerializerMethodField()
 
