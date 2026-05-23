@@ -5,6 +5,11 @@ class UserUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Users
         fields = ['id', 'username', 'email', 'student_class', 'is_active', 'is_staff', 'avatar']
+        extra_kwargs = {
+            'username': {'required': False},
+            'email': {'required': False},
+            'student_class': {'required': False},
+        }
 
 class UserSerializer(serializers.ModelSerializer):
     avatar = serializers.SerializerMethodField()
@@ -16,9 +21,6 @@ class UserSerializer(serializers.ModelSerializer):
     def get_avatar(self, obj):
         if not obj.avatar:
             return None
-        request = self.context.get('request')
-        if request is not None:
-            return request.build_absolute_uri(obj.avatar.url)
         return obj.avatar.url
 
 class ScheduleSerializer(serializers.ModelSerializer):
