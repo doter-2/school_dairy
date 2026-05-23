@@ -24,7 +24,7 @@ class Users(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     teacher = models.CharField(max_length=100,blank=True,null=True)
-    avatar = models.ImageField(upload_to='avatars/',default="default.png")
+    avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
 
     objects = UserManager()
 
